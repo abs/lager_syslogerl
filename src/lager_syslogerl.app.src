@@ -1,0 +1,13 @@
+%% -*- tab-width: 4;erlang-indent-level: 4;indent-tabs-mode: nil -*-
+%% ex: ts=4 sw=4 et
+{application, lager_syslogerl,
+ [
+  {description, "Syslogerl backend for Lager"},
+  {vsn, "1.0.0"},
+  {modules, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {registered, []}
+ ]}.
