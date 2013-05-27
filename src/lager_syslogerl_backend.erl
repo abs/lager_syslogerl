@@ -1,4 +1,5 @@
 %% Copyright (c) 2011-2012 Basho Technologies, Inc.  All Rights Reserved.
+%% Copyright (c) 2013 LeChat, Inc.  All Rights Reserved.
 %%
 %% This file is provided to you under the Apache License,
 %% Version 2.0 (the "License"); you may not use this file
@@ -85,16 +86,21 @@ handle_call(_Request, State) ->
 
 %% @private
 handle_event({log, Level, {_Date, _Time}, [_LevelStr, _Location, Message]},
- #state{level = LogLevel, id = {_, {Ident, Facility}}} = State) when Level =< LogLevel ->
-    syslogerl:send(Facility, Ident, convert_level(Level), Message),
-    % syslog:log(State#state.handle, convert_level(Level), [Location, Message]),
+ #state{level = LogLevel, formatter = Formatter, format_config = FormatConfig, id = {_, {Ident, Facility}}} = State) when Level =< LogLevel ->
+    FacilityNumber = syslogerl:facility_to_number(Facility),
+    Severity = lager_msg:severity_as_int(Message),
+    MessageText = iolist_to_binary(Formatter:format(Message, FormatConfig)),
+    syslogerl:send(FacilityNumber, Ident, Severity, MessageText),
     {ok, State};
+
 handle_event({log, Message},
-  #state{level = Level,formatter = Formatter, format_config = FormatConfig, id = {_, {Ident, Facility}}} = State) ->
+  State = #state{level = Level, formatter = Formatter, format_config = FormatConfig, id = {_, {Ident, Facility}}} = State) ->
     case lager_util:is_loggable(Message, Level, State#state.id) of
         true ->
-            syslogerl:send(Facility, Ident, convert_level(Level), Formatter:format(Message, FormatConfig)),
-            % syslog:log(State#state.handle, convert_level(lager_msg:severity_as_int(Message)), [Formatter:format(Message, FormatConfig)]),
+            FacilityNumber = syslogerl:facility_to_number(Facility),
+            Severity = lager_msg:severity_as_int(Message),
+            MessageText = iolist_to_binary(Formatter:format(Message, FormatConfig)),
+            syslogerl:send(FacilityNumber, Ident, Severity, MessageText),
             {ok, State};
         false ->
             {ok, State}
@@ -119,24 +125,6 @@ config_to_id([Ident, Facility, _Level]) ->
     {?MODULE, {Ident, Facility}};
 config_to_id([Ident, Facility, _Level, _Formatter]) ->
     {?MODULE, {Ident, Facility}}.
-
-%convert_level(?DEBUG) -> debug;
-%convert_level(?INFO) -> info;
-%convert_level(?NOTICE) -> notice;
-%convert_level(?WARNING) -> warning;
-%convert_level(?ERROR) -> err;
-%convert_level(?CRITICAL) -> crit;
-%convert_level(?ALERT) -> alert;
-%convert_level(?EMERGENCY) -> emerg.
-
-convert_level(?DEBUG) -> syslogerl:debug();
-convert_level(?INFO) -> syslogerl:info();
-convert_level(?NOTICE) -> syslogerl:notice();
-convert_level(?WARNING) -> syslogerl:warning();
-convert_level(?ERROR) -> syslogerl:error();
-convert_level(?CRITICAL) -> syslogerl:critical();
-convert_level(?ALERT) -> syslogerl:alert();
-convert_level(?EMERGENCY) -> syslogerl:emergency().
 
 parse_level(Level) ->
     try lager_util:config_to_mask(Level) of
