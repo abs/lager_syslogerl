@@ -88,7 +88,7 @@ handle_call(_Request, State) ->
 handle_event({log, Level, {_Date, _Time}, [_LevelStr, _Location, Message]},
  #state{level = LogLevel, formatter = Formatter, format_config = FormatConfig, id = {_, {Ident, Facility}}} = State) when Level =< LogLevel ->
     FacilityNumber = syslogerl:facility_to_number(Facility),
-    Severity = lager_msg:severity_as_int(Message),
+    Severity = syslogerl:severity_to_number(lager_msg:severity(Message)),
     MessageText = iolist_to_binary(Formatter:format(Message, FormatConfig)),
     syslogerl:send(FacilityNumber, Ident, Severity, MessageText),
     {ok, State};
@@ -98,7 +98,7 @@ handle_event({log, Message},
     case lager_util:is_loggable(Message, Level, State#state.id) of
         true ->
             FacilityNumber = syslogerl:facility_to_number(Facility),
-            Severity = lager_msg:severity_as_int(Message),
+            Severity = syslogerl:severity_to_number(lager_msg:severity(Message)),
             MessageText = iolist_to_binary(Formatter:format(Message, FormatConfig)),
             syslogerl:send(FacilityNumber, Ident, Severity, MessageText),
             {ok, State};
