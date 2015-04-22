@@ -89,7 +89,7 @@ handle_event({log, Level, {_Date, _Time}, [_LevelStr, _Location, Message]},
  #state{level = LogLevel, formatter = Formatter, format_config = FormatConfig, id = {_, {Ident, Facility}}} = State) when Level =< LogLevel ->
     FacilityNumber = syslogerl:facility_to_number(Facility),
     Severity = syslogerl:severity_to_number(lager_msg:severity(Message)),
-    MessageText = iolist_to_binary(Formatter:format(Message, FormatConfig)),
+    MessageText = unicode:characters_to_binary(Formatter:format(Message, FormatConfig)),
     syslogerl:send(FacilityNumber, Ident, Severity, MessageText),
     {ok, State};
 
@@ -99,7 +99,7 @@ handle_event({log, Message},
         true ->
             FacilityNumber = syslogerl:facility_to_number(Facility),
             Severity = syslogerl:severity_to_number(lager_msg:severity(Message)),
-            MessageText = iolist_to_binary(Formatter:format(Message, FormatConfig)),
+            MessageText = unicode:characters_to_binary(Formatter:format(Message, FormatConfig)),
             syslogerl:send(FacilityNumber, Ident, Severity, MessageText),
             {ok, State};
         false ->
