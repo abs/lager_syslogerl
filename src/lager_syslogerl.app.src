@@ -3,7 +3,7 @@
 {application, lager_syslogerl,
  [
   {description, "Syslogerl backend for Lager"},
-  {vsn, "1.0.0"},
+  {vsn, "1.0.1"},
   {modules, []},
   {applications, [
                   kernel,
